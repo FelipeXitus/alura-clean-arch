@@ -11,105 +11,14 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-} from 'class-validator';
 import { PrismaClient } from '@prisma/client';
-import {
-  ApiProperty,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
+import { CreateProductDto } from './presentation/product/dto/create-product.dto';
+import { UpdateProductDto } from './presentation/product/dto/update-product.dto';
+import { AddCartItemDto } from './presentation/cart-item/dto/add-item.dto';
 
 // --- DTOs (Data Transfer Objects) ---
 // Todos os DTOs foram movidos para este arquivo.
-
-export class CriarProdutoDto {
-  @ApiProperty({
-    description: 'Nome do produto',
-    example: 'Smartphone XYZ',
-  })
-  @IsString()
-  @IsNotEmpty()
-  public nome: string;
-
-  @ApiProperty({
-    description: 'Preço do produto',
-    example: 1299.99,
-    minimum: 0.01,
-  })
-  @IsNumber()
-  @Min(0.01)
-  preco: number;
-
-  @ApiProperty({
-    description: 'Quantidade em estoque',
-    example: 50,
-    minimum: 0,
-  })
-  @IsNumber()
-  @Min(0)
-  estoque: number;
-}
-
-export class AtualizarProdutoDto {
-  @ApiProperty({
-    description: 'Nome do produto',
-    example: 'Smartphone XYZ',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  nome?: string;
-
-  @ApiProperty({
-    description: 'Preço do produto',
-    example: 1299.99,
-    minimum: 0.01,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0.01)
-  preco?: number;
-
-  @ApiProperty({
-    description: 'Quantidade em estoque',
-    example: 50,
-    minimum: 0,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  estoque?: number;
-}
-
-export class AdicionarItemDto {
-  @ApiProperty({
-    description: 'ID do produto',
-    example: 'c7d8e9f0-1a2b-3c4d-5e6f-7g8h9i0j1k2l',
-  })
-  @IsString()
-  @IsNotEmpty()
-  produtoId: string;
-
-  @ApiProperty({
-    description: 'Quantidade do produto',
-    example: 1,
-    minimum: 1,
-  })
-  @IsNumber()
-  @Min(1, { message: 'A quantidade deve ser de no mínimo 1.' })
-  quantidade: number;
-}
 
 @ApiTags('produtos', 'carrinho')
 @Controller()
@@ -133,7 +42,7 @@ export class AppController {
     description: 'Já existe um produto com este nome',
   })
   @Post('produtos')
-  async criarProduto(@Body() dadosDoProduto: CriarProdutoDto) {
+  async criarProduto(@Body() dadosDoProduto: CreateProductDto) {
     const produtoExistente = await this.prisma.produto.findUnique({
       where: { nome: dadosDoProduto.nome },
     });
@@ -195,7 +104,7 @@ export class AppController {
   @Put('produtos/:id')
   async atualizarProduto(
     @Param('id') id: string,
-    @Body() dadosParaAtualizar: AtualizarProdutoDto,
+    @Body() dadosParaAtualizar: UpdateProductDto,
   ) {
     await this.buscarProdutoPorId(id);
 
@@ -246,7 +155,7 @@ export class AppController {
     description: 'Estoque insuficiente',
   })
   @Post('carrinho/adicionar')
-  async adicionarItem(@Body() itemDto: AdicionarItemDto) {
+  async adicionarItem(@Body() itemDto: AddCartItemDto) {
     const carrinho = await this.obterOuCriarCarrinho();
 
     const produto = await this.prisma.produto.findUnique({
