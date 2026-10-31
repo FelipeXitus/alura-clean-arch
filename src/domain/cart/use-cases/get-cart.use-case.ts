@@ -1,12 +1,10 @@
-import { PrismaClient } from '@prisma/client';
-import { getOrCreateCart } from '../helpers/cart.helper';
-import { formatCart } from '../helpers/format-cart.helper';
+import { ICartRepository } from '../i-cart.repository';
 import { FormattedCart } from '../types/cart.types';
 
 export class GetCartUseCase {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private readonly cartRepository: ICartRepository) {}
+
   public async execute(usuarioId: string): Promise<FormattedCart> {
-    const cart = await getOrCreateCart(this.prisma, usuarioId);
-    return formatCart(cart);
+    return this.cartRepository.getCart(usuarioId);
   }
 }
