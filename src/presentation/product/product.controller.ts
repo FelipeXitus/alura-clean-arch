@@ -1,29 +1,34 @@
 import {
-  BadRequestException,
   Body,
-  ConflictException,
   Controller,
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Post,
   Put,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam, ApiTags } from '@nestjs/swagger';
-import CreateProductDto from './dto/create-product.dto';
-import UpdateProductDto from './dto/update-product.dto';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import CreateProductDto from './dto/create-product.dto';
+import UpdateProductDto from './dto/update-product.dto';
+import { CreateProductUseCase } from '../../domain/product/use-cases/create-product.use-case';
+import { ListProductsUseCase } from '../../domain/product/use-cases/list-products.use-case';
+import { GetProductByIdUseCase } from '../../domain/product/use-cases/get-product-by-id.use.case';
+import { UpdateProductUseCase } from '../../domain/product/use-cases/update-product.use.case';
+import { DeleteProductUseCase } from '../../domain/product/use-cases/delete-product.use-case';
 
-@ApiTags('produto')
-@Controller('produto')
+@ApiTags('produtos')
+@Controller('produtos')
 export class ProductController {
-  adapter = new PrismaPg({
+  private readonly adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL!,
   });
-  private readonly prisma = new PrismaClient({ adapter: this.adapter });
+
+  private readonly prisma = new PrismaClient({
+    adapter: this.adapter,
+  });
 
   @ApiOperation({ summary: 'Criar um novo produto' })
   @ApiResponse({
@@ -34,21 +39,16 @@ export class ProductController {
     status: 409,
     description: 'Já existe um produto com este nome',
   })
-  @Post('produtos')
+  @Post()
   async criarProduto(@Body() dadosDoProduto: CreateProductDto) {
-    const produtoExistente = await this.prisma.produto.findUnique({
-      where: { nome: dadosDoProduto.nome },
-    });
+    const useCase = new CreateProductUseCase(this.prisma);
 
-    if (produtoExistente) {
-      throw new ConflictException('Já existe um produto com este nome.');
-    }
+    const produto = await useCase.execute(dadosDoProduto);
 
-    const produto = await this.prisma.produto.create({
-      data: dadosDoProduto,
-    });
-
-    return { mensagem: 'Produto criado com sucesso!', produto };
+    return {
+      mensagem: 'Produto criado com sucesso!',
+      produto,
+    };
   }
 
   @ApiOperation({ summary: 'Listar todos os produtos' })
@@ -56,13 +56,18 @@ export class ProductController {
     status: 200,
     description: 'Lista de produtos retornada com sucesso',
   })
-  @Get('produtos')
+  @Get()
   async listarTodos() {
-    return this.prisma.produto.findMany();
+    const useCase = new ListProductsUseCase(this.prisma);
+
+    return useCase.execute();
   }
 
   @ApiOperation({ summary: 'Obter um produto específico' })
-  @ApiParam({ name: 'id', description: 'ID do produto' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do produto',
+  })
   @ApiResponse({
     status: 200,
     description: 'Produto encontrado',
@@ -71,17 +76,18 @@ export class ProductController {
     status: 404,
     description: 'Produto não encontrado',
   })
-  @Get('produtos/:id')
+  @Get('/:id')
   async buscarProdutoPorId(@Param('id') id: string) {
-    const produto = await this.prisma.produto.findUnique({ where: { id } });
-    if (!produto) {
-      throw new NotFoundException(`Produto com ID ${id} não encontrado.`);
-    }
-    return produto;
+    const useCase = new GetProductByIdUseCase(this.prisma);
+
+    return useCase.execute(id);
   }
 
   @ApiOperation({ summary: 'Atualizar um produto existente' })
-  @ApiParam({ name: 'id', description: 'ID do produto' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do produto',
+  })
   @ApiResponse({
     status: 200,
     description: 'Produto atualizado com sucesso',
@@ -94,29 +100,30 @@ export class ProductController {
     status: 400,
     description: 'Dados inválidos para atualização',
   })
-  @Put('produtos/:id')
+  @ApiResponse({
+    status: 409,
+    description: 'Já existe um produto com este nome',
+  })
+  @Put('/:id')
   async atualizarProduto(
     @Param('id') id: string,
     @Body() dadosParaAtualizar: UpdateProductDto,
   ) {
-    await this.buscarProdutoPorId(id);
+    const useCase = new UpdateProductUseCase(this.prisma);
 
-    if (Object.keys(dadosParaAtualizar).length === 0) {
-      throw new BadRequestException(
-        'Pelo menos um campo deve ser fornecido para atualização.',
-      );
-    }
+    const produto = await useCase.execute(id, dadosParaAtualizar);
 
-    const produtoAtualizado = await this.prisma.produto.update({
-      where: { id },
-      data: dadosParaAtualizar,
-    });
-
-    return { mensagem: 'Produto atualizado!', produto: produtoAtualizado };
+    return {
+      mensagem: 'Produto atualizado!',
+      produto,
+    };
   }
 
   @ApiOperation({ summary: 'Remover um produto' })
-  @ApiParam({ name: 'id', description: 'ID do produto' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do produto',
+  })
   @ApiResponse({
     status: 204,
     description: 'Produto removido com sucesso',
@@ -125,10 +132,11 @@ export class ProductController {
     status: 404,
     description: 'Produto não encontrado',
   })
-  @Delete('produtos/:id')
+  @Delete('/:id')
   @HttpCode(204)
   async removerProduto(@Param('id') id: string) {
-    await this.buscarProdutoPorId(id);
-    await this.prisma.produto.delete({ where: { id } });
+    const useCase = new DeleteProductUseCase(this.prisma);
+
+    await useCase.execute(id);
   }
 }
