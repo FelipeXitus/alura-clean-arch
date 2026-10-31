@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import ProductEntity from '../../entities/product.entity';
 import { IProductRepository } from '../i-product.repository';
 
@@ -8,6 +8,7 @@ interface CreateProductInput {
   estoque: number;
 }
 
+@Injectable()
 export class CreateProductUseCase {
   public constructor(private readonly productRepository: IProductRepository) {}
 

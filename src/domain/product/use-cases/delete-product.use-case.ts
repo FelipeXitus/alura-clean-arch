@@ -1,6 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { IProductRepository } from '../i-product.repository';
 
+@Injectable()
 export class DeleteProductUseCase {
   public constructor(private readonly productRepository: IProductRepository) {}
 

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Injectable,
   NotFoundException,
 } from '@nestjs/common';
 
@@ -13,6 +14,7 @@ interface UpdateProductInput {
   estoque?: number;
 }
 
+@Injectable()
 export class UpdateProductUseCase {
   public constructor(private readonly productRepository: IProductRepository) {}
 
