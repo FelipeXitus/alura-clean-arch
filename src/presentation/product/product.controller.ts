@@ -40,14 +40,14 @@ export class ProductController {
     description: 'Já existe um produto com este nome',
   })
   @Post()
-  async criarProduto(@Body() dadosDoProduto: CreateProductDto) {
+  async createProduct(@Body() dadosDoProduto: CreateProductDto) {
     const useCase = new CreateProductUseCase(this.prisma);
 
-    const produto = await useCase.execute(dadosDoProduto);
+    const product = await useCase.execute(dadosDoProduto);
 
     return {
       mensagem: 'Produto criado com sucesso!',
-      produto,
+      produto: product,
     };
   }
 
@@ -57,7 +57,7 @@ export class ProductController {
     description: 'Lista de produtos retornada com sucesso',
   })
   @Get()
-  async listarTodos() {
+  async listProducts() {
     const useCase = new ListProductsUseCase(this.prisma);
 
     return useCase.execute();
@@ -77,7 +77,7 @@ export class ProductController {
     description: 'Produto não encontrado',
   })
   @Get('/:id')
-  async buscarProdutoPorId(@Param('id') id: string) {
+  async getProductById(@Param('id') id: string) {
     const useCase = new GetProductByIdUseCase(this.prisma);
 
     return useCase.execute(id);
@@ -105,17 +105,17 @@ export class ProductController {
     description: 'Já existe um produto com este nome',
   })
   @Put('/:id')
-  async atualizarProduto(
+  async updateProduct(
     @Param('id') id: string,
     @Body() dadosParaAtualizar: UpdateProductDto,
   ) {
     const useCase = new UpdateProductUseCase(this.prisma);
 
-    const produto = await useCase.execute(id, dadosParaAtualizar);
+    const product = await useCase.execute(id, dadosParaAtualizar);
 
     return {
       mensagem: 'Produto atualizado!',
-      produto,
+      produto: product,
     };
   }
 
@@ -134,7 +134,7 @@ export class ProductController {
   })
   @Delete('/:id')
   @HttpCode(204)
-  async removerProduto(@Param('id') id: string) {
+  async deleteProduct(@Param('id') id: string) {
     const useCase = new DeleteProductUseCase(this.prisma);
 
     await useCase.execute(id);
