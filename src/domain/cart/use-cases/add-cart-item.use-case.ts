@@ -1,11 +1,16 @@
+import { Inject, Injectable } from '@nestjs/common';
 import {
   AddCartItemRepositoryInput,
   AddCartItemRepositoryOutput,
   ICartRepository,
 } from '../i-cart.repository';
 
+@Injectable()
 export class AddCartItemUseCase {
-  public constructor(private readonly cartRepository: ICartRepository) {}
+  public constructor(
+    @Inject(ICartRepository)
+    private readonly cartRepository: ICartRepository,
+  ) {}
 
   public async execute(
     usuarioId: string,
