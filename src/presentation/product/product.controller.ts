@@ -11,14 +11,19 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 import CreateProductDto from './dto/create-product.dto';
 import UpdateProductDto from './dto/update-product.dto';
-import { PrismaClient } from '.prisma/client/default.js';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
 
+@ApiTags('produto')
 @Controller('produto')
 export class ProductController {
-  private readonly prisma = new PrismaClient();
+  adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL!,
+  });
+  private readonly prisma = new PrismaClient({ adapter: this.adapter });
 
   @ApiOperation({ summary: 'Criar um novo produto' })
   @ApiResponse({
