@@ -1,10 +1,10 @@
 import ProductEntity from '../../entities/product.entity';
-import { PrismaClient } from '@prisma/client';
+import { IProductRepository } from '../i-product.repository';
 
 export class ListProductsUseCase {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private readonly productRepository: IProductRepository) {}
 
   public async execute(): Promise<ProductEntity[]> {
-    return this.prisma.produto.findMany();
+    return this.productRepository.listProducts();
   }
 }

@@ -3,8 +3,9 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+
 import ProductEntity from '../../entities/product.entity';
-import { PrismaClient } from '@prisma/client';
+import { IProductRepository } from '../i-product.repository';
 
 interface UpdateProductInput {
   nome?: string;
@@ -13,7 +14,7 @@ interface UpdateProductInput {
 }
 
 export class UpdateProductUseCase {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private readonly productRepository: IProductRepository) {}
 
   public async execute(
     id: string,
@@ -25,29 +26,22 @@ export class UpdateProductUseCase {
       );
     }
 
-    const productExists = await this.prisma.produto.findUnique({
-      where: { id },
-    });
+    const productExists = await this.productRepository.getProductById(id);
 
     if (!productExists) {
       throw new NotFoundException(`Produto com ID ${id} não encontrado.`);
     }
 
     if (productData.nome) {
-      const productWithSameName = await this.prisma.produto.findUnique({
-        where: {
-          nome: productData.nome,
-        },
-      });
+      const productWithSameName = await this.productRepository.getProductByName(
+        productData.nome,
+      );
 
       if (productWithSameName && productWithSameName.id !== id) {
         throw new ConflictException('Já existe um produto com este nome.');
       }
     }
 
-    return this.prisma.produto.update({
-      where: { id },
-      data: productData,
-    });
+    return this.productRepository.updateProduct(id, productData);
   }
 }

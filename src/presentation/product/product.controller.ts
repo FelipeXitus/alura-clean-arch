@@ -9,8 +9,6 @@ import {
   Put,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
 import CreateProductDto from './dto/create-product.dto';
 import UpdateProductDto from './dto/update-product.dto';
 import { CreateProductUseCase } from '../../domain/product/use-cases/create-product.use-case';
@@ -18,17 +16,12 @@ import { ListProductsUseCase } from '../../domain/product/use-cases/list-product
 import { GetProductByIdUseCase } from '../../domain/product/use-cases/get-product-by-id.use.case';
 import { UpdateProductUseCase } from '../../domain/product/use-cases/update-product.use.case';
 import { DeleteProductUseCase } from '../../domain/product/use-cases/delete-product.use-case';
+import { IProductRepository } from '../../domain/product/i-product.repository';
 
 @ApiTags('produtos')
 @Controller('produtos')
 export class ProductController {
-  private readonly adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL!,
-  });
-
-  private readonly prisma = new PrismaClient({
-    adapter: this.adapter,
-  });
+  public constructor(private readonly productRepository: IProductRepository) {}
 
   @ApiOperation({ summary: 'Criar um novo produto' })
   @ApiResponse({
@@ -41,7 +34,7 @@ export class ProductController {
   })
   @Post()
   async createProduct(@Body() dadosDoProduto: CreateProductDto) {
-    const useCase = new CreateProductUseCase(this.prisma);
+    const useCase = new CreateProductUseCase(this.productRepository);
 
     const product = await useCase.execute(dadosDoProduto);
 
@@ -58,7 +51,7 @@ export class ProductController {
   })
   @Get()
   async listProducts() {
-    const useCase = new ListProductsUseCase(this.prisma);
+    const useCase = new ListProductsUseCase(this.productRepository);
 
     return useCase.execute();
   }
@@ -78,7 +71,7 @@ export class ProductController {
   })
   @Get('/:id')
   async getProductById(@Param('id') id: string) {
-    const useCase = new GetProductByIdUseCase(this.prisma);
+    const useCase = new GetProductByIdUseCase(this.productRepository);
 
     return useCase.execute(id);
   }
@@ -109,7 +102,7 @@ export class ProductController {
     @Param('id') id: string,
     @Body() dadosParaAtualizar: UpdateProductDto,
   ) {
-    const useCase = new UpdateProductUseCase(this.prisma);
+    const useCase = new UpdateProductUseCase(this.productRepository);
 
     const product = await useCase.execute(id, dadosParaAtualizar);
 
@@ -135,7 +128,7 @@ export class ProductController {
   @Delete('/:id')
   @HttpCode(204)
   async deleteProduct(@Param('id') id: string) {
-    const useCase = new DeleteProductUseCase(this.prisma);
+    const useCase = new DeleteProductUseCase(this.productRepository);
 
     await useCase.execute(id);
   }

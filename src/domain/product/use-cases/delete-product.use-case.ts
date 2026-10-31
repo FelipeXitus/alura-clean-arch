@@ -1,20 +1,16 @@
 import { NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { IProductRepository } from '../i-product.repository';
 
 export class DeleteProductUseCase {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private readonly productRepository: IProductRepository) {}
 
   public async execute(id: string): Promise<void> {
-    const productExists = await this.prisma.produto.findUnique({
-      where: { id },
-    });
+    const productExists = await this.productRepository.getProductById(id);
 
     if (!productExists) {
       throw new NotFoundException(`Produto com ID ${id} não encontrado.`);
     }
 
-    await this.prisma.produto.delete({
-      where: { id },
-    });
+    await this.productRepository.deleteProduct(id);
   }
 }
